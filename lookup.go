@@ -20,16 +20,59 @@ func main() {
 	}
 	defer conn.Close()
 
-	//s_studier_forvantade_programdeltagare_chalmers_tkite_h21
-	//s_passer_prog_tkite_h18
-	//s_studier_programdeltagare_chalmers_mpdsc_h21
-	//s_studier_programdeltagare_chalmers_tkite_h21
+	tkite_members := getMembersInGroup(conn, "s_studier_programdeltagare_chalmers_tkite")
+	tkdat_members := getMembersInGroup(conn, "s_studier_programdeltagare_chalmers_tkdat")
+	tkelt_members := getMembersInGroup(conn, "s_studier_programdeltagare_chalmers_tkelt")
 
-	//printMemerships(conn, "s_studier_forvantade_programdeltagare_chalmers_mpcas_h21", "s_studier_programdeltagare_*")
-	/*for _, cid := range getMembersInGroup(conn, "s_studier_kursdeltagare_chalmers_dat405_h21") {
-		fmt.Println(getUserFullName(conn, cid))
-	}*/
-	//printMemerships(conn, "s_studier_programdeltagare_chalmers_tkite_h18", "s_studier_forvantade_programdeltagare_*")
+	sort.Strings(tkite_members)
+	sort.Strings(tkdat_members)
+	sort.Strings(tkelt_members)
+	
+	fmt.Printf("%d IT members \n", len(tkite_members))
+	fmt.Printf("%d Data members \n", len(tkdat_members))
+	fmt.Printf("%d Electro members \n", len(tkelt_members))
+
+	masters := map[string]string{
+		"mpdsc": "MPDSC (IT)",
+		"mpsof": "MPSOF (IT)",
+		"mpide": "MPIDE (IT)",
+		"mpalg": "MPALG (DAT)",
+		"mpcsn": "MPCSN (DAT)",
+		"mphpc": "MPHPC (DAT)",
+		"mpbme": "MPBME (ELT)",
+		"mpees": "MPEES (ELT)",
+		"mpcom": "MPCOM (ELT)",
+		"mpepo": "MPEPO (ELT)",
+		"mpwps": "MPWPS (ELT)"};
+	
+	for k, v := range masters {
+		master_students := getMembersInGroup(conn, fmt.Sprintf("s_passer_prog_%s", k))
+		sort.Strings(master_students)
+		
+		fmt.Printf("\n%d %s members \n", len(master_students), v)
+		fmt.Printf("- %d IT members \n", nOverlapp(master_students, tkite_members))
+		fmt.Printf("- %d Data members \n", nOverlapp(master_students, tkdat_members))
+		fmt.Printf("- %d Electro members \n", nOverlapp(master_students, tkelt_members))
+	}
+}
+
+// Assuming a and b are soreted
+func nOverlapp(a []string, b[]string) int {
+	count := 0
+	ai := 0
+	bi := 0
+	for ai < len(a) && bi < len(b) {
+		if a[ai] > b[bi] {
+			bi += 1
+		} else if a[ai] < b[bi] {
+			ai += 1
+		} else {
+			count += 1
+			ai += 1
+			bi += 1
+		}
+	}
+	return count
 }
 
 func printMemerships(conn *ldap.Conn, group string, memberFilter string) {
