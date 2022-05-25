@@ -32,6 +32,28 @@ func main() {
 	//printMemerships(conn, "s_studier_programdeltagare_chalmers_tkite_h18", "s_studier_forvantade_programdeltagare_*")
 }
 
+func getCids(conn *ldap.Conn, fullName string) []string {
+	req := ldap.NewSearchRequest(
+		"ou=people,dc=chalmers,dc=se",
+		ldap.ScopeWholeSubtree,
+		ldap.NeverDerefAliases, 0,0,false,
+		fmt.Sprintf("(cn=%s)", fullName),
+		[]string{"uid"}, nil)
+	
+	res, err := conn.Search(req)
+	if err != nil || len(res.Entries) <= 0 {
+		fmt.Println(err)
+		return []string{}
+	}
+	
+	cids := []string{}
+	for _, entry := range res.Entries {
+		cids = append(cids, entry.GetAttributeValue("uid"))
+	}
+
+	return cids
+}
+
 func printMemerships(conn *ldap.Conn, group string, memberFilter string) {
 	groupCount := map[string]int{}
 	groupCount["None"] = 0
